@@ -21,26 +21,6 @@ CACHE_DURATION = 300  # 5 minutes
 def get_device_type_by_mac(mac):
     """Détermine le type d'appareil basé sur l'adresse MAC (avec cache)"""
     try:
-        mac_prefix = mac.upper().replace('-', ':')[:8]
-        
-        # Base de données simplifiée des préfixes MAC
-        mac_vendors = {
-            '00:08:22': 'InProComm', 
-            'DC:85:DE': 'Espressif (ESP32/Arduino)',
-            '34:CF:F6': 'Espressif (ESP32)',
-            '7A:66:E1': 'Android Device',
-            '7C:F3:1B': 'Samsung',
-            '98:B8:BA': 'Vivo',
-            '00:1A:2B': 'Apple',
-            '00:50:56': 'VMware',
-            'AC:87:A3': 'LiteOn',
-            'B8:27:EB': 'Raspberry Pi'
-        }
-        
-        for prefix, vendor in mac_vendors.items():
-            if mac_prefix.startswith(prefix):
-                return vendor
-        
         # Types génériques basés sur les patterns
         if any(x in mac.upper() for x in ['DC:85', '34:CF', '98:B8']):
             return 'Mobile/IoT'

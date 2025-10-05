@@ -13,7 +13,7 @@ class HotspotManagerApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Gestionnaire Hotspot',
+      title: 'No-Net',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
@@ -78,6 +78,7 @@ class _HotspotManagerPageState extends State<HotspotManagerPage> {
   bool isLoading = true;
   String? errorMessage;
   Timer? refreshTimer;
+  bool autoRefreshEnabled = false; // État du rafraîchissement auto
   
   // Configuration de l'URL du backend
   final String baseUrl = 'http://192.168.1.46:5000';
@@ -89,17 +90,32 @@ class _HotspotManagerPageState extends State<HotspotManagerPage> {
     super.initState();
     fetchDevices();
     fetchServerStatus();
-    // Rafraîchir automatiquement toutes les 5 secondes
-    refreshTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
-      fetchDevices();
-      fetchServerStatus();
-    });
   }
 
   @override
   void dispose() {
     refreshTimer?.cancel();
     super.dispose();
+  }
+
+  void toggleAutoRefresh() {
+    setState(() {
+      autoRefreshEnabled = !autoRefreshEnabled;
+      
+      if (autoRefreshEnabled) {
+        // Démarrer le rafraîchissement automatique
+        fetchDevices();
+        fetchServerStatus();
+        refreshTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+          fetchDevices();
+          fetchServerStatus();
+        });
+      } else {
+        // Arrêter le rafraîchissement automatique
+        refreshTimer?.cancel();
+        refreshTimer = null;
+      }
+    });
   }
 
   Future<void> fetchDevices() async {
@@ -235,15 +251,24 @@ class _HotspotManagerPageState extends State<HotspotManagerPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Gestionnaire Hotspot'),
+        title: const Text('No-Net'),
         actions: [
+          IconButton(
+            icon: Icon(
+              autoRefreshEnabled ? Icons.pause_circle : Icons.play_circle,
+            ),
+            onPressed: toggleAutoRefresh,
+            tooltip: autoRefreshEnabled 
+                ? 'Arrêter le rafraîchissement auto' 
+                : 'Activer le rafraîchissement auto',
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () {
               fetchDevices();
               fetchServerStatus();
             },
-            tooltip: 'Rafraîchir',
+            tooltip: 'Rafraîchir manuellement',
           ),
         ],
       ),
@@ -278,6 +303,33 @@ class _HotspotManagerPageState extends State<HotspotManagerPage> {
                     label: 'Bloqués',
                     value: '$blockedCount',
                     color: Colors.red,
+                  ),
+                ],
+              ),
+            ),
+
+          // Indicateur de rafraîchissement auto
+          if (autoRefreshEnabled)
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.green.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Colors.green, width: 1),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.sync, size: 16, color: Colors.green),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Rafraîchissement auto activé (5s)',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.green,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ],
               ),
